@@ -1,22 +1,18 @@
 "use client";
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
+import type { Adjustments, EditDocument } from "../src/types/edit-document";
+import { createEditDocument } from "../src/editor/create-edit-document";
+import { defaultAdjustments } from "../src/editor/default-adjustments";
 
-type Adjustments = {
-  exposure: number;
-  contrast: number;
-  saturation: number;
-  warmth: number;
-};
-
-const defaults: Adjustments = { exposure: 0, contrast: 0, saturation: 0, warmth: 0 };
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [fileName, setFileName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [adjustments, setAdjustments] = useState<Adjustments>(defaults);
+  const [editDocument, setEditDocument] = useState<EditDocument | null>(null);
+  const adjustments = editDocument?.adjustments ?? defaultAdjustments; 
   const [showOriginal, setShowOriginal] = useState(false);
   const [ready, setReady] = useState(false);
 

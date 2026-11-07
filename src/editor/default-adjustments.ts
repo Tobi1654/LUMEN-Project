@@ -6,7 +6,7 @@ export const defaultAdjustments: Adjustments = {
     highlights: 0,
     shadows: 0,
     saturation: 0,
-    temperature: 0,
+    warmth: 0,
     whites: 0,
     blacks: 0,
     vibrance: 0,

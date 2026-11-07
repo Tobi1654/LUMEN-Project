@@ -4,7 +4,7 @@ export interface Adjustments{
     highlights: number;
     shadows: number;
     saturation: number;
-    temperature: number;
+    warmth: number;
     whites: number;
     blacks: number;
     vibrance: number;
