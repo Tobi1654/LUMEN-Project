@@ -5,4 +5,14 @@ export interface Adjustments{
     shadows: number;
     saturation: number;
     temperature: number;
+    whites: number;
+    blacks: number;
+    vibrance: number;
+}
+
+export interface EditDocument{
+    version: number;
+    photoID: string;
+    adjustments: Adjustments;
+    updatedAt: string;
 }
