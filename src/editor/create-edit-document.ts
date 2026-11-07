@@ -6,7 +6,7 @@ export function createEditDocument(
     photoID: string
 ): EditDocument{
     return{
-        version: 1,
+        version: 2,
         photoID: photoID,
         adjustments: {...defaultAdjustments},
         updatedAt: new Date().toISOString(),
