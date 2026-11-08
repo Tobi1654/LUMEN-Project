@@ -70,8 +70,14 @@ export default function Home() {
     const url = URL.createObjectURL(file);
     setImageUrl(url);
     setFileName(file.name);
-    setAdjustments(defaults);
+    const newDocument = createEditDocument(
+      crypto.randomUUID()
+    );
+
+    setEditDocument(newDocument);
+
     setReady(false);
+
     const image = new Image();
     image.onload = () => {
       imageRef.current = image;
@@ -83,7 +89,18 @@ export default function Home() {
   }
 
   function update(key: keyof Adjustments, value: number) {
-    setAdjustments(current => ({ ...current, [key]: value }));
+    setEditDocument(current => {
+      if (!current) return current;
+
+      return{
+        ...current,
+        adjustments: {
+          ...current.adjustments,
+          [key]: value,
+        },
+        updatedAt: new Date().toISOString(),
+      };
+    });
   }
 
   function exportJpeg() {
@@ -146,7 +163,18 @@ export default function Home() {
         </section>
 
         <aside className="rightPanel">
-          <div className="panelHeading"><div><span className="eyebrow">ADJUSTMENTS</span><h2>Light</h2></div><button className="textButton" onClick={() => setAdjustments(defaults)}>Reset all</button></div>
+          <div className="panelHeading"><div><span className="eyebrow">ADJUSTMENTS</span><h2>Light</h2></div><button className="textButton" onClick={() => setEditDocument(current => {
+            if (!current) return current;
+
+            return{
+              ...current,
+              adjustments: {...defaultAdjustments},
+              updatedAt: new Date().toISOString(),
+            };
+          })}>
+              Reset all
+          </button>
+          </div>
           {controls.map(control => (
             <div className="control" key={control.key}>
               <div className="controlLabel"><label htmlFor={control.key}>{control.label}</label><output>{adjustments[control.key].toFixed(control.key === "exposure" ? 2 : 0)}{control.unit}</output></div>
