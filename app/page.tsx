@@ -5,6 +5,8 @@ import type { Adjustments, EditDocument } from "../src/types/edit-document";
 import { createEditDocument } from "../src/editor/create-edit-document";
 import { defaultAdjustments } from "../src/editor/default-adjustments";
 import  type {HistoryState} from "../src/editor/history";
+import type { Snapshot } from "../src/editor/snapshots";
+import { createSnapshot } from "../src/editor/snapshots";
 
 import {
   createHistory,
@@ -22,6 +24,7 @@ export default function Home() {
   const [fileName, setFileName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [history, setHistory] = useState<HistoryState<EditDocument> | null>(null);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const editDocument = history?.present ?? null;
   const adjustments = editDocument?.adjustments ?? defaultAdjustments; 
   const [showOriginal, setShowOriginal] = useState(false);
@@ -86,6 +89,7 @@ export default function Home() {
     );
 
     setHistory(createHistory(newDocument));
+    setSnapshots([]);
 
     setReady(false);
 
@@ -127,6 +131,34 @@ function handleRedo(){
   setHistory(current => {
     if (!current) return current;
     return redo(current);
+  });
+}
+
+function handleSaveSnapshot(){
+  if (!editDocument) return;
+
+  const name = window.prompt("Give your snapshot a title:");
+
+  if (!name || !name.trim()) return;
+
+  const snapshot = createSnapshot(
+    editDocument,
+    name.trim()
+  );
+
+  setSnapshots(current => [...current, snapshot]);
+}
+
+function handleRestoreSnapshot(snapshot: Snapshot){
+  setHistory(current => {
+    if (!current) return current;
+
+    const restoredDocument: EditDocument = {
+      ...snapshot.document,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return pushHistory(current, restoredDocument);
   });
 }
 
