@@ -4,6 +4,16 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import type { Adjustments, EditDocument } from "../src/types/edit-document";
 import { createEditDocument } from "../src/editor/create-edit-document";
 import { defaultAdjustments } from "../src/editor/default-adjustments";
+import  type {HistoryState} from "../src/editor/history";
+
+import {
+  createHistory,
+  pushHistory,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+} from "../src/editor/history"
 
 
 export default function Home() {
@@ -11,7 +21,8 @@ export default function Home() {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [fileName, setFileName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [editDocument, setEditDocument] = useState<EditDocument | null>(null);
+  const [history, setHistory] = useState<HistoryState<EditDocument> | null>(null);
+  const editDocument = history?.present ?? null;
   const adjustments = editDocument?.adjustments ?? defaultAdjustments; 
   const [showOriginal, setShowOriginal] = useState(false);
   const [ready, setReady] = useState(false);
@@ -74,7 +85,7 @@ export default function Home() {
       crypto.randomUUID()
     );
 
-    setEditDocument(newDocument);
+    setHistory(createHistory(newDocument));
 
     setReady(false);
 
@@ -89,19 +100,35 @@ export default function Home() {
   }
 
   function update(key: keyof Adjustments, value: number) {
-    setEditDocument(current => {
-      if (!current) return current;
+  setHistory(current => {
+    if (!current) return current;
 
-      return{
-        ...current,
-        adjustments: {
-          ...current.adjustments,
-          [key]: value,
-        },
-        updatedAt: new Date().toISOString(),
-      };
-    });
-  }
+    const newDocument: EditDocument = {
+      ...current.present,
+      adjustments: {
+        ...current.present.adjustments,
+        [key]: value,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+
+    return pushHistory(current, newDocument);
+  });
+}
+
+function handleUndo(){
+  setHistory(current => {
+    if (!current) return current;
+    return undo(current);
+  });
+}
+
+function handleRedo(){
+  setHistory(current => {
+    if (!current) return current;
+    return redo(current);
+  });
+}
 
   function exportJpeg() {
     const canvas = canvasRef.current;
@@ -163,15 +190,26 @@ export default function Home() {
         </section>
 
         <aside className="rightPanel">
-          <div className="panelHeading"><div><span className="eyebrow">ADJUSTMENTS</span><h2>Light</h2></div><button className="textButton" onClick={() => setEditDocument(current => {
-            if (!current) return current;
+          <div className="panelHeading"><div><span className="eyebrow">ADJUSTMENTS</span><h2>Light</h2></div>
+          
+          <div>
+            <button className="textButton" onClick={handleUndo} disabled={!history || !canUndo(history)}>Undo</button>
+            <button className="textButton" onClick={handleRedo} disabled={!history || !canRedo(history)}>Redo</button>
+          </div>
 
-            return{
-              ...current,
-              adjustments: {...defaultAdjustments},
-              updatedAt: new Date().toISOString(),
-            };
-          })}>
+          <button className="textButton" onClick={() => {
+  setHistory(current => {
+    if (!current) return current;
+
+    const newDocument: EditDocument = {
+      ...current.present,
+      adjustments: { ...defaultAdjustments },
+      updatedAt: new Date().toISOString(),
+    };
+
+    return pushHistory(current, newDocument);
+  });
+}}>
               Reset all
           </button>
           </div>

@@ -1,6 +1,6 @@
 export interface HistoryState<T>{
     past: T[];
-    present: T];
+    present: T;
     future: T[];
 }
 
