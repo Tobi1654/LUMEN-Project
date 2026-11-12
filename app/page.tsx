@@ -253,6 +253,48 @@ function handleRestoreSnapshot(snapshot: Snapshot){
               <div className="rangeEnds"><span>{control.min}</span><span>{control.max}</span></div>
             </div>
           ))}
+
+          <div className="snapshotSection">
+              `<div className="panelHeading">
+                <div>
+                  <span className="eyebrow">YOUR EDITS</span>
+                  <h2>Snapshots</h2>
+                </div>
+
+                <button
+                  className="textButton"
+                  onClick={handleSaveSnapshot}
+                  disabled={!ready}
+                >
+                  + Save
+                </button>
+              </div>
+
+              {snapshots.length === 0 ? (
+                <p className="panelNote">
+                  No snapshots yet. Save your current editing style to get started.
+                </p>
+              ) : (
+                snapshots.map(snapshot => (
+                  <div className="snapshotItem" key={snapshot.id}>
+                    <div>
+                      <strong>{snapshot.name}</strong>
+                      <p>
+                        {new Date(snapshot.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+
+                    <button
+                      className="textButton"
+                      onClick={() => handleRestoreSnapshot(snapshot)}
+                    >
+                      Restore
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>`
+
           <div className="panelNote"><span className="statusDot" /> {ready ? "Local preview active" : "Waiting for a photograph"}<p>Edits are currently held in memory. Persistent edit history and project saving are next milestones.</p></div>
         </aside>
       </div>
