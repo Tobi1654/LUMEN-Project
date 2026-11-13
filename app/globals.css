@@ -101,12 +101,13 @@ button,input{font:inherit}.shell{min-height:100vh;display:flex;flex-direction:co
 }
 
 .libraryItem button:first-of-type {
-    background: #e5e5e5;
-    color: #171717;
+    background: #121212;
+    color: #f8f8f8;
 }
 
 .libraryItem button:first-of-type:hover {
     background: #ffffff;
+    color: #202428;
     transform: translateY(-2px);
 }
 
