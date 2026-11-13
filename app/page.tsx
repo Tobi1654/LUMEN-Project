@@ -229,6 +229,38 @@ function handleRestoreSnapshot(snapshot: Snapshot){
     link.click();
   }
 
+  async function handleOpenProject(project: Project) {
+  try {
+    const url = URL.createObjectURL(project.image);
+
+    setReady(false);
+
+    const image = new Image();
+
+    image.onload = () => {
+      imageRef.current = image;
+
+      setImageUrl(url);
+      setFileName(project.fileName);
+      setImageBlob(project.image);
+      setHistory(createHistory(project.editDocument));
+      setSnapshots(project.snapshots);
+      setReady(true);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      console.error("Failed to open saved project.");
+      alert("Could not open this project.");
+    };
+
+    image.src = url;
+  } catch (error) {
+    console.error("Failed to open project:", error);
+    alert("Could not open this project.");
+  }
+}
+
   const controls: { key: keyof Adjustments; label: string; min: number; max: number; step: number; unit: string }[] = [
     { key: "exposure", label: "Exposure", min: -3, max: 3, step: 0.05, unit: " EV" },
     { key: "contrast", label: "Contrast", min: -100, max: 100, step: 1, unit: "" },
@@ -296,6 +328,10 @@ function handleRestoreSnapshot(snapshot: Snapshot){
                     <strong>{project.fileName}</strong>
                     <p>Last edited: {new Date(project.updatedAt).toLocaleString()}</p>
                   </div>
+
+                  <button onClick={() => handleOpenProject(project)}>
+                    Open Project
+                  </button>
                 </div>
               ))
             )
