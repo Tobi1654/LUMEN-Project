@@ -7,6 +7,7 @@ import { defaultAdjustments } from "../src/editor/default-adjustments";
 import  type {HistoryState} from "../src/editor/history";
 import type { Snapshot } from "../src/editor/snapshots";
 import { createSnapshot } from "../src/editor/snapshots";
+import { saveProject } from "../src/storage/database";
 
 import {
   createHistory,
@@ -23,6 +24,7 @@ export default function Home() {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [fileName, setFileName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [history, setHistory] = useState<HistoryState<EditDocument> | null>(null);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const editDocument = history?.present ?? null;
@@ -38,6 +40,24 @@ export default function Home() {
     const canvas = canvasRef.current;
     const image = imageRef.current;
     if (!canvas || !image || !ready) return;
+
+  useEffect(() => {
+    if (!history || !imageBlob) return;
+
+    const project = {
+      id: history.present.photoID,
+      fileName: fileName,
+      image: imageBlob,
+      editDocument: history.present,
+      snapshots: snapshots,
+      updatedAt: new Date().toISOString(),
+    };
+
+    saveProject(project).catch(error => {
+      console.error("Automatic saving failed:", error)
+    });
+
+  }, [history, imageBlob, fileName, snapshots]);
 
     const maxSide = 1800;
     const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
@@ -84,6 +104,7 @@ export default function Home() {
     const url = URL.createObjectURL(file);
     setImageUrl(url);
     setFileName(file.name);
+    setImageBlob(file);
     const newDocument = createEditDocument(
       crypto.randomUUID()
     );
