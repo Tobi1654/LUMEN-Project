@@ -277,6 +277,30 @@ function handleRestoreSnapshot(snapshot: Snapshot){
             <div className="filmThumb">{ready ? <img src={imageUrl} alt="Current photograph thumbnail" /> : <span>＋</span>}</div>
             <span className="filmName">{fileName || "No photograph imported"}</span>
           </div>
+
+          <div className="librarySection">
+            <div className="panelHeading">
+              <div>
+                <span className="eyebrow">YOUR WORK</span>
+                <h2>Project Library</h2>
+              </div>
+              <span>{projects.length} projects</span>
+            </div>
+
+            {projects.length === 0 ? (
+              <p>No projects saved yet</p>
+            ) : (
+              projects.map(project => (
+                <div className="libraryItem" key={project.id}>
+                  <div>
+                    <strong>{project.fileName}</strong>
+                    <p>Last edited: {new Date(project.updatedAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))
+            )
+          }
+          </div>
         </section>
 
         <aside className="rightPanel">
