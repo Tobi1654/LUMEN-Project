@@ -21,6 +21,32 @@ import {
 } from "../src/editor/history";
 
 
+function ProjectThumbnail({ project }: { project: Project }) {
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(project.thumbnail);
+
+    setThumbnailUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [project.image]);
+
+  if (!thumbnailUrl) {
+    return <div className="libraryThumbnail">Loading...</div>;
+  }
+
+  return (
+    <img
+      className="libraryThumbnail"
+      src={thumbnailUrl}
+      alt={`Preview of ${project.fileName}`}
+    />
+  );
+}
+
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -97,22 +123,98 @@ export default function Home() {
 }, [adjustments, ready, showOriginal]);
 
   useEffect(() => {
-    if (!history || !imageBlob) return;
+  if (!history || !imageBlob) return;
 
-    const project = {
-      id: history.present.photoID,
-      fileName: fileName,
-      image: imageBlob,
-      editDocument: history.present,
-      snapshots: snapshots,
-      updatedAt: new Date().toISOString(),
-    };
+  async function saveCurrentProject() {
+    try {
+      // Create a small copy of the original image.
+      const bitmap = await createImageBitmap(imageBlob!);
+      const canvas = document.createElement("canvas");
 
-    saveProject(project).catch(error => {
+      const maxSize = 400;
+      const scale = Math.min(
+        maxSize / bitmap.width,
+        maxSize / bitmap.height,
+        1
+      );
+
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        bitmap.close();
+        throw new Error("Could not create thumbnail canvas.");
+      }
+
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+
+      // Apply the saved editing adjustments.
+      const frame = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const pixels = frame.data;
+      const adjustments = history!.present.adjustments;
+
+      const exposure = Math.pow(2, adjustments.exposure);
+      const contrast = (adjustments.contrast + 100) / 100;
+      const saturation = (adjustments.saturation + 100) / 100;
+      const warmth = adjustments.warmth * 0.55;
+
+      for (let i = 0; i < pixels.length; i += 4) {
+        let r = pixels[i] * exposure + warmth;
+        let g = pixels[i + 1] * exposure;
+        let b = pixels[i + 2] * exposure - warmth;
+
+        r = (r - 128) * contrast + 128;
+        g = (g - 128) * contrast + 128;
+        b = (b - 128) * contrast + 128;
+
+        const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+        pixels[i] = Math.max(0, Math.min(255, gray + (r - gray) * saturation));
+        pixels[i + 1] = Math.max(0, Math.min(255, gray + (g - gray) * saturation));
+        pixels[i + 2] = Math.max(0, Math.min(255, gray + (b - gray) * saturation));
+      }
+
+      ctx.putImageData(frame, 0, 0);
+
+      // Convert the edited canvas into an image Blob.
+      const thumbnail = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(blob => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error("Could not create thumbnail image."));
+          }
+        }, "image/jpeg", 0.85);
+      });
+
+      const project = {
+        id: history!.present.photoID,
+        fileName,
+        image: imageBlob!,
+        thumbnail,
+        editDocument: history!.present,
+        snapshots,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await saveProject(project);
+    } catch (error) {
       console.error("Automatic saving failed:", error);
-    });
-  
-  }, [history, imageBlob, fileName, snapshots]);
+    }
+  }
+
+  saveCurrentProject();
+
+}, [history, imageBlob, fileName, snapshots]);
 
   useEffect(() => {
     async function loadProjects(){
@@ -324,6 +426,8 @@ function handleRestoreSnapshot(snapshot: Snapshot){
             ) : (
               projects.map(project => (
                 <div className="libraryItem" key={project.id}>
+                  <ProjectThumbnail project={project}/>
+
                   <div>
                     <strong>{project.fileName}</strong>
                     <p>Last edited: {new Date(project.updatedAt).toLocaleString()}</p>
