@@ -116,3 +116,26 @@ export async function getAllProjects(): Promise<Project[]> {
         };
     });
 }
+
+export async function deleteProject(id: string): Promise<void> {
+    const db = await openLumenDatabase();
+
+    return new Promise((resolve, reject) => {
+    const transaction = db.transaction("projects", "readwrite");
+    const store = transaction.objectStore("projects");
+
+    store.delete(id);
+
+    transaction.oncomplete = () => {
+        resolve();
+        };
+
+    transaction.onerror = () => {
+        reject(transaction.error);
+        };
+
+    transaction.onabort = () => {
+        reject(transaction.error);
+        };
+    });
+}

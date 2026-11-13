@@ -8,7 +8,7 @@ import { defaultAdjustments } from "../src/editor/default-adjustments";
 import type { HistoryState } from "../src/editor/history";
 import type { Snapshot } from "../src/editor/snapshots";
 import { createSnapshot } from "../src/editor/snapshots";
-import { saveProject, getAllProjects } from "../src/storage/database";
+import { saveProject, getAllProjects, deleteProject } from "../src/storage/database";
 import type { Project } from "../src/types/project";
 
 import {
@@ -25,7 +25,9 @@ function ProjectThumbnail({ project }: { project: Project }) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const url = URL.createObjectURL(project.thumbnail);
+    const url = URL.createObjectURL(
+      project.thumbnail ?? project.image
+    );
 
     setThumbnailUrl(url);
 
@@ -363,6 +365,25 @@ function handleRestoreSnapshot(snapshot: Snapshot){
   }
 }
 
+async function handleDeleteProject(project: Project) {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${project.fileName}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await deleteProject(project.id);
+
+    setProjects(current =>
+      current.filter(item => item.id !== project.id)
+    );
+  } catch (error) {
+    console.error("Failed to delete project:", error);
+    alert("Could not delete this project.");
+  }
+}
+
   const controls: { key: keyof Adjustments; label: string; min: number; max: number; step: number; unit: string }[] = [
     { key: "exposure", label: "Exposure", min: -3, max: 3, step: 0.05, unit: " EV" },
     { key: "contrast", label: "Contrast", min: -100, max: 100, step: 1, unit: "" },
@@ -435,6 +456,10 @@ function handleRestoreSnapshot(snapshot: Snapshot){
 
                   <button onClick={() => handleOpenProject(project)}>
                     Open Project
+                  </button>
+
+                  <button onClick={() => handleDeleteProject(project)} className="deleteButton">
+                    Delete Project
                   </button>
                 </div>
               ))
