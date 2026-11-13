@@ -1,10 +1,11 @@
 "use client";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import type { Adjustments, EditDocument } from "../src/types/edit-document";
 import { createEditDocument } from "../src/editor/create-edit-document";
 import { defaultAdjustments } from "../src/editor/default-adjustments";
-import  type {HistoryState} from "../src/editor/history";
+import type { HistoryState } from "../src/editor/history";
 import type { Snapshot } from "../src/editor/snapshots";
 import { createSnapshot } from "../src/editor/snapshots";
 import { saveProject } from "../src/storage/database";
@@ -16,7 +17,7 @@ import {
   redo,
   canUndo,
   canRedo,
-} from "../src/editor/history"
+} from "../src/editor/history";
 
 
 export default function Home() {
@@ -37,9 +38,61 @@ export default function Home() {
   }, [imageUrl]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const image = imageRef.current;
-    if (!canvas || !image || !ready) return;
+  const canvas = canvasRef.current;
+  const image = imageRef.current;
+
+  if (!canvas || !image || !ready) return;
+
+  const maxSide = 1800;
+  const scale = Math.min(
+    1,
+    maxSide / Math.max(image.naturalWidth, image.naturalHeight)
+  );
+
+  canvas.width = Math.round(image.naturalWidth * scale);
+  canvas.height = Math.round(image.naturalHeight * scale);
+
+  const ctx = canvas.getContext("2d", {
+    willReadFrequently: true,
+  });
+
+  if (!ctx) return;
+
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  if (showOriginal) return;
+
+  const frame = ctx.getImageData(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  const pixels = frame.data;
+  const exposure = Math.pow(2, adjustments.exposure);
+  const contrast = (adjustments.contrast + 100) / 100;
+  const saturation = (adjustments.saturation + 100) / 100;
+  const warmth = adjustments.warmth * 0.55;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    let r = pixels[i] * exposure + warmth;
+    let g = pixels[i + 1] * exposure;
+    let b = pixels[i + 2] * exposure - warmth;
+
+    r = (r - 128) * contrast + 128;
+    g = (g - 128) * contrast + 128;
+    b = (b - 128) * contrast + 128;
+
+    const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+    pixels[i] = clamp(gray + (r - gray) * saturation);
+    pixels[i + 1] = clamp(gray + (g - gray) * saturation);
+    pixels[i + 2] = clamp(gray + (b - gray) * saturation);
+  }
+
+  ctx.putImageData(frame, 0, 0);
+}, [adjustments, ready, showOriginal]);
 
   useEffect(() => {
     if (!history || !imageBlob) return;
@@ -54,41 +107,12 @@ export default function Home() {
     };
 
     saveProject(project).catch(error => {
-      console.error("Automatic saving failed:", error)
+      console.error("Automatic saving failed:", error);
     });
-
+  
   }, [history, imageBlob, fileName, snapshots]);
 
-    const maxSide = 1800;
-    const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
-    canvas.width = Math.round(image.naturalWidth * scale);
-    canvas.height = Math.round(image.naturalHeight * scale);
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-    if (showOriginal) return;
-    const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = frame.data;
-    const exposure = Math.pow(2, adjustments.exposure);
-    const contrast = (adjustments.contrast + 100) / 100;
-    const saturation = (adjustments.saturation + 100) / 100;
-    const warmth = adjustments.warmth * 0.55;
-
-    for (let i = 0; i < pixels.length; i += 4) {
-      let r = pixels[i] * exposure + warmth;
-      let g = pixels[i + 1] * exposure;
-      let b = pixels[i + 2] * exposure - warmth;
-      r = (r - 128) * contrast + 128;
-      g = (g - 128) * contrast + 128;
-      b = (b - 128) * contrast + 128;
-      const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      pixels[i] = clamp(gray + (r - gray) * saturation);
-      pixels[i + 1] = clamp(gray + (g - gray) * saturation);
-      pixels[i + 2] = clamp(gray + (b - gray) * saturation);
-    }
-    ctx.putImageData(frame, 0, 0);
-  }, [adjustments, ready, showOriginal]);
 
   function clamp(value: number) {
     return Math.max(0, Math.min(255, value));
@@ -276,7 +300,7 @@ function handleRestoreSnapshot(snapshot: Snapshot){
           ))}
 
           <div className="snapshotSection">
-              `<div className="panelHeading">
+              <div className="panelHeading">
                 <div>
                   <span className="eyebrow">YOUR EDITS</span>
                   <h2>Snapshots</h2>
@@ -314,9 +338,9 @@ function handleRestoreSnapshot(snapshot: Snapshot){
                   </div>
                 ))
               )}
-            </div>`
+            </div>
 
-          <div className="panelNote"><span className="statusDot" /> {ready ? "Local preview active" : "Waiting for a photograph"}<p>Edits are currently held in memory. Persistent edit history and project saving are next milestones.</p></div>
+          <div className="panelNote"><span className="statusDot" /> {ready ? "Local preview active" : "Waiting for a photograph"}<p>Your project is saved locally in this browser as you edit. Cloud sync is not available yet.</p></div>
         </aside>
       </div>
     </main>

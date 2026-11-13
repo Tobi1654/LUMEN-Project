@@ -1,4 +1,3 @@
-import { version } from "os";
 import { EditDocument } from "../types/edit-document";
 import { defaultAdjustments } from "./default-adjustments";
 
