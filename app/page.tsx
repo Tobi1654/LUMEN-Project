@@ -525,6 +525,33 @@ async function handleCreateCollection() {
                               <button onClick={() => handleOpenProject(project)}>
                                 Open Project
                               </button>
+
+                              <button
+                                className="deleteButton"
+                                onClick={async () => {
+                                  const updatedCollection = {
+                                    ...collections.find(
+                                      collection => collection.id === activeCollectionId
+                                    )!,
+                                    projectIds: collections.find(
+                                      collection => collection.id === activeCollectionId
+                                    )!.projectIds.filter(id => id !== project.id),
+                                    updatedAt: new Date().toISOString(),
+                                  };
+
+                                  await saveCollection(updatedCollection);
+
+                                  setCollections(current =>
+                                    current.map(collection =>
+                                      collection.id === updatedCollection.id
+                                        ? updatedCollection
+                                        : collection
+                                    )
+                                  );
+                                }}
+                              >
+                                Remove from Collection
+                              </button>
                             </div>
                           );
                         })}
