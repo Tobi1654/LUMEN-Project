@@ -49,7 +49,7 @@ button,input{font:inherit}.shell{min-height:100vh;display:flex;flex-direction:co
 @media(max-width:520px){.topbar{padding:0 12px}.topActions{gap:6px}.button{padding:9px;font-size:10px}.canvasHeader{gap:8px}.canvasHeader h1{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 
 .libraryThumbnail {
-    width: 100%;
+    width: 50%;
     aspect-ratio: 4/3;
     object-fit: cover;
     border-radius: 10px;

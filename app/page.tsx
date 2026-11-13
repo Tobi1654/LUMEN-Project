@@ -8,7 +8,15 @@ import { defaultAdjustments } from "../src/editor/default-adjustments";
 import type { HistoryState } from "../src/editor/history";
 import type { Snapshot } from "../src/editor/snapshots";
 import { createSnapshot } from "../src/editor/snapshots";
-import { saveProject, getAllProjects, deleteProject } from "../src/storage/database";
+import { 
+  saveProject, 
+  getAllProjects, 
+  deleteProject, 
+  saveCollection,
+  getAllCollections
+} from "../src/storage/database";
+
+import type { Collection } from "../src/types/collection";
 import type { Project } from "../src/types/project";
 
 import {
@@ -62,6 +70,7 @@ export default function Home() {
   const [showOriginal, setShowOriginal] = useState(false);
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([])
 
   useEffect(() => {
     return () => { if (imageUrl) URL.revokeObjectURL(imageUrl); };
@@ -219,17 +228,20 @@ export default function Home() {
 }, [history, imageBlob, fileName, snapshots]);
 
   useEffect(() => {
-    async function loadProjects(){
-      try {
-        const savedProjects = await getAllProjects();
-        setProjects(savedProjects);
-      } catch (error) {
-        console.error("Failed to load projects:", error);
-      }
-    }
+  async function loadLibrary() {
+    try {
+      const savedProjects = await getAllProjects();
+      const savedCollections = await getAllCollections();
 
-    loadProjects();
-  }, []);
+      setProjects(savedProjects);
+      setCollections(savedCollections);
+    } catch (error) {
+      console.error("Failed to load library:", error);
+    }
+  }
+
+  loadLibrary();
+}, []);
 
   function clamp(value: number) {
     return Math.max(0, Math.min(255, value));
@@ -384,6 +396,31 @@ async function handleDeleteProject(project: Project) {
   }
 }
 
+async function handleCreateCollection() {
+  const name = window.prompt("Name your collection:");
+
+  if (!name || !name.trim()) return;
+
+  const now = new Date().toISOString();
+
+  const collection: Collection = {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    projectIds: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  try {
+    await saveCollection(collection);
+
+    setCollections(current => [...current, collection]);
+  } catch (error) {
+    console.error("Failed to create collection:", error);
+    alert("Could not create collection.");
+  }
+}
+
   const controls: { key: keyof Adjustments; label: string; min: number; max: number; step: number; unit: string }[] = [
     { key: "exposure", label: "Exposure", min: -3, max: 3, step: 0.05, unit: " EV" },
     { key: "contrast", label: "Contrast", min: -100, max: 100, step: 1, unit: "" },
@@ -438,6 +475,22 @@ async function handleDeleteProject(project: Project) {
               <div>
                 <span className="eyebrow">YOUR WORK</span>
                 <h2>Project Library</h2>
+                <button onClick={handleCreateCollection}> + New Collection </button>
+                <div className="librarySection">
+                  <h2>My Collections</h2>
+
+                  {collections.length === 0 ? (
+                    <p>No collections yet. Create one to get started</p>
+                  ) : (
+                    <div>{collections.map((collection) => (
+                      <div className="libraryItem" key={collection.id}>
+                        <strong>{collection.name}</strong>
+                        <p>{collection.projectIds.length} photos</p>
+                      </div>
+                    ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <span>{projects.length} projects</span>
             </div>
@@ -456,6 +509,52 @@ async function handleDeleteProject(project: Project) {
 
                   <button onClick={() => handleOpenProject(project)}>
                     Open Project
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const collectionName = window.prompt(
+                        "Which collection would you like to add this photo to?\n\n" +
+                        collections.map(collection => collection.name).join("\n")
+                      );
+
+                      if (!collectionName) return;
+
+                      const selectedCollection = collections.find(
+                        collection =>
+                          collection.name.toLowerCase() === collectionName.trim().toLowerCase()
+                      );
+
+                      if (!selectedCollection) {
+                        alert("Collection not found.");
+                        return;
+                      }
+
+                      if (selectedCollection.projectIds.includes(project.id)) {
+                        alert("This photo is already in that collection.");
+                        return;
+                      }
+
+                      const updatedCollection = {
+                        ...selectedCollection,
+                        projectIds: [...selectedCollection.projectIds, project.id],
+                        updatedAt: new Date().toISOString(),
+                      };
+
+                      saveCollection(updatedCollection).then(() => {
+                        setCollections(current =>
+                          current.map(collection =>
+                            collection.id === updatedCollection.id
+                              ? updatedCollection
+                              : collection
+                          )
+                        );
+
+                        alert("Photo added to collection!");
+                      });
+                    }}
+                  >
+                    Add to Collection
                   </button>
 
                   <button onClick={() => handleDeleteProject(project)} className="deleteButton">
