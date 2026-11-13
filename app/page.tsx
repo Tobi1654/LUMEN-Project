@@ -71,6 +71,7 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [collections, setCollections] = useState<Collection[]>([])
+  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
 
   useEffect(() => {
     return () => { if (imageUrl) URL.revokeObjectURL(imageUrl); };
@@ -486,11 +487,50 @@ async function handleCreateCollection() {
                       <div className="libraryItem" key={collection.id}>
                         <strong>{collection.name}</strong>
                         <p>{collection.projectIds.length} photos</p>
+
+                        <button onClick={() => setActiveCollectionId(collection.id)}>Open Collection</button>
                       </div>
                     ))}
                     </div>
                   )}
                 </div>
+                {activeCollectionId && (
+                  <div className="librarySection">
+                    <h2>
+                      {collections.find(
+                        collection => collection.id === activeCollectionId
+                      )?.name}
+                    </h2>
+
+                    <button onClick={() => setActiveCollectionId(null)}>
+                      Back to Collections
+                    </button>
+
+                    <div>
+                      {collections
+                        .find(collection => collection.id === activeCollectionId)
+                        ?.projectIds.map(projectId => {
+                          const project = projects.find(
+                            item => item.id === projectId
+                          );
+
+                          if (!project) return null;
+
+                          return (
+                            <div className="libraryItem" key={project.id}>
+                              <ProjectThumbnail project={project} />
+
+                              <strong>{project.fileName}</strong>
+
+                              <button onClick={() => handleOpenProject(project)}>
+                                Open Project
+                              </button>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
               </div>
               <span>{projects.length} projects</span>
             </div>
