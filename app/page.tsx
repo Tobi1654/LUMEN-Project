@@ -8,7 +8,8 @@ import { defaultAdjustments } from "../src/editor/default-adjustments";
 import type { HistoryState } from "../src/editor/history";
 import type { Snapshot } from "../src/editor/snapshots";
 import { createSnapshot } from "../src/editor/snapshots";
-import { saveProject } from "../src/storage/database";
+import { saveProject, getAllProjects } from "../src/storage/database";
+import type { Project } from "../src/types/project";
 
 import {
   createHistory,
@@ -32,6 +33,7 @@ export default function Home() {
   const adjustments = editDocument?.adjustments ?? defaultAdjustments; 
   const [showOriginal, setShowOriginal] = useState(false);
   const [ready, setReady] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
     return () => { if (imageUrl) URL.revokeObjectURL(imageUrl); };
@@ -112,7 +114,18 @@ export default function Home() {
   
   }, [history, imageBlob, fileName, snapshots]);
 
+  useEffect(() => {
+    async function loadProjects(){
+      try {
+        const savedProjects = await getAllProjects();
+        setProjects(savedProjects);
+      } catch (error) {
+        console.error("Failed to load projects:", error);
+      }
+    }
 
+    loadProjects();
+  }, []);
 
   function clamp(value: number) {
     return Math.max(0, Math.min(255, value));
