@@ -71,6 +71,7 @@ export default function Home() {
   const [showOriginal, setShowOriginal] = useState(false);
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [collections, setCollections] = useState<Collection[]>([])
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
 
@@ -530,6 +531,12 @@ async function handleDeleteCollection(collection: Collection) {
               <div>
                 <span className="eyebrow">YOUR WORK</span>
                 <h2>Project Library</h2>
+                <input
+                  type="text"
+                  placeholder="Search projects by name..."
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
                 <button onClick={handleCreateCollection}> + New Collection </button>
                 <div className="librarySection">
                   <h2>My Collections</h2>
@@ -548,7 +555,7 @@ async function handleDeleteCollection(collection: Collection) {
                             <ProjectThumbnail project={coverProject} />
                           ) : null;
                         })()}
-                        
+
                         <strong>{collection.name}</strong>
                         <p>{collection.projectIds.length} photos</p>
 
