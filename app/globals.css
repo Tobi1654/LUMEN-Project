@@ -128,3 +128,14 @@ button,input{font:inherit}.shell{min-height:100vh;display:flex;flex-direction:co
     border-color: #666;
     transform: translateY(-3px);
 }
+
+.libraryItem {
+    overflow: hidden;
+}
+
+.libraryItem img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    border-radius: 8px;
+}
