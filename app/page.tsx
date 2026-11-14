@@ -519,6 +519,7 @@ async function handleRenameCollection(collection: Collection) {
                         <p>{collection.projectIds.length} photos</p>
 
                         <button onClick={() => setActiveCollectionId(collection.id)}>Open Collection</button>
+                        <button onClick={() => handleRenameCollection(collection)}>Rename Collection</button>
                       </div>
                     ))}
                     </div>
