@@ -422,6 +422,36 @@ async function handleCreateCollection() {
   }
 }
 
+async function handleRenameCollection(collection: Collection) {
+  const newName = window.prompt(
+    "Enter a new collection name:",
+    collection.name
+  );
+
+  if (!newName || !newName.trim()) return;
+
+  const updatedCollection = {
+    ...collection,
+    name: newName.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await saveCollection(updatedCollection);
+
+    setCollections(current =>
+      current.map(item =>
+        item.id === updatedCollection.id
+          ? updatedCollection
+          : item
+      )
+    );
+  } catch (error) {
+    console.error("Failed to rename collection:", error);
+    alert("Could not rename collection.");
+  }
+}
+
   const controls: { key: keyof Adjustments; label: string; min: number; max: number; step: number; unit: string }[] = [
     { key: "exposure", label: "Exposure", min: -3, max: 3, step: 0.05, unit: " EV" },
     { key: "contrast", label: "Contrast", min: -100, max: 100, step: 1, unit: "" },
