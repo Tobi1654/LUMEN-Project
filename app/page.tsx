@@ -539,6 +539,16 @@ async function handleDeleteCollection(collection: Collection) {
                   ) : (
                     <div>{collections.map((collection) => (
                       <div className="libraryItem" key={collection.id}>
+                        {collection.projectIds.length > 0 && (() => {
+                          const coverProject = projects.find(
+                            project => project.id === collection.projectIds[0]
+                          );
+
+                          return coverProject ? (
+                            <ProjectThumbnail project={coverProject} />
+                          ) : null;
+                        })()}
+                        
                         <strong>{collection.name}</strong>
                         <p>{collection.projectIds.length} photos</p>
 
