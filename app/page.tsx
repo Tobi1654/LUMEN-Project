@@ -72,6 +72,7 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("");
   const [collections, setCollections] = useState<Collection[]>([])
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
 
@@ -537,6 +538,17 @@ async function handleDeleteCollection(collection: Collection) {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
+
+                <select
+                  value={sortOrder}
+                  onChange={(event) => setSortOrder(event.target.value)}
+                >
+                  <option value="recent">Recently Edited</option>
+                  <option value="oldest">Oldest Edited</option>
+                  <option value="name-asc">FIlename A-Z</option>
+                  <option value="name-desc">Filename Z-A</option>
+                </select>
+
                 <button onClick={handleCreateCollection}> + New Collection </button>
                 <div className="librarySection">
                   <h2>My Collections</h2>
@@ -640,8 +652,26 @@ async function handleDeleteCollection(collection: Collection) {
             ) : (
               projects
                 .filter(project =>
-                  project.fileName.toLowerCase().includes(searchQuery.toLowerCase())
+                  project.fileName
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())
                 )
+                .sort((a, b) => {
+                  switch (sortOrder) {
+                    case "oldest":
+                      return a.updatedAt.localeCompare(b.updatedAt);
+
+                    case "name-asc":
+                      return a.fileName.localeCompare(b.fileName);
+
+                    case "name-desc":
+                      return b.fileName.localeCompare(a.fileName);
+
+                    case "recent":
+                    default:
+                      return b.updatedAt.localeCompare(a.updatedAt);
+                  }
+                })
                 .map(project => (
                 <div className="libraryItem" key={project.id}>
                   <ProjectThumbnail project={project}/>
