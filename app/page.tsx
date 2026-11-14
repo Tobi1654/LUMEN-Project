@@ -13,7 +13,8 @@ import {
   getAllProjects, 
   deleteProject, 
   saveCollection,
-  getAllCollections
+  getAllCollections,
+  deleteCollection
 } from "../src/storage/database";
 
 import type { Collection } from "../src/types/collection";
@@ -452,6 +453,29 @@ async function handleRenameCollection(collection: Collection) {
   }
 }
 
+async function handleDeleteCollection(collection: Collection) {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${collection.name}"? Your photos will not be deleted.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await deleteCollection(collection.id);
+
+    setCollections(current =>
+      current.filter(item => item.id !== collection.id)
+    );
+
+    if (activeCollectionId === collection.id) {
+      setActiveCollectionId(null);
+    }
+  } catch (error) {
+    console.error("Failed to delete collection:", error);
+    alert("Could not delete collection.");
+  }
+}
+
   const controls: { key: keyof Adjustments; label: string; min: number; max: number; step: number; unit: string }[] = [
     { key: "exposure", label: "Exposure", min: -3, max: 3, step: 0.05, unit: " EV" },
     { key: "contrast", label: "Contrast", min: -100, max: 100, step: 1, unit: "" },
@@ -520,6 +544,7 @@ async function handleRenameCollection(collection: Collection) {
 
                         <button onClick={() => setActiveCollectionId(collection.id)}>Open Collection</button>
                         <button onClick={() => handleRenameCollection(collection)}>Rename Collection</button>
+                        <button className="deleteButton" onClick={() => handleDeleteCollection(collection)}>Delete Collection</button>
                       </div>
                     ))}
                     </div>

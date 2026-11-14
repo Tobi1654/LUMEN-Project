@@ -156,6 +156,34 @@ export async function deleteProject(id: string): Promise<void> {
     });
 }
 
+export async function deleteCollection(id: string): Promise<void> {
+    const database = await openLumenDatabase();
+
+    return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+        COLLECTION_STORE,
+        "readwrite"
+        );
+
+        transaction.objectStore(COLLECTION_STORE).delete(id);
+
+        transaction.oncomplete = () => {
+        database.close();
+        resolve();
+        };
+
+        transaction.onerror = () => {
+        database.close();
+        reject(transaction.error);
+        };
+
+        transaction.onabort = () => {
+        database.close();
+        reject(transaction.error);
+        };
+    });
+}
+
 export async function saveCollection(
     collection: Collection
     ): Promise<void> {
