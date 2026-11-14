@@ -638,7 +638,11 @@ async function handleDeleteCollection(collection: Collection) {
             {projects.length === 0 ? (
               <p>No projects saved yet</p>
             ) : (
-              projects.map(project => (
+              projects
+                .filter(project =>
+                  project.fileName.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map(project => (
                 <div className="libraryItem" key={project.id}>
                   <ProjectThumbnail project={project}/>
 
