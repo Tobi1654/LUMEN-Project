@@ -544,7 +544,7 @@ async function handleDeleteCollection(collection: Collection) {
 
                         <button onClick={() => setActiveCollectionId(collection.id)}>Open Collection</button>
                         <button onClick={() => handleRenameCollection(collection)}>Rename Collection</button>
-                        <button className="deleteButton" onClick={() => handleDeleteCollection(collection)}>Delete Collection</button>
+                        <button className="deleteButton" onClick={() => handleDeleteCollection(collection)}>Delete this Collection</button>
                       </div>
                     ))}
                     </div>
