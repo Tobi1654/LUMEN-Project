@@ -72,7 +72,7 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("");
+  const [sortOrder, setSortOrder] = useState("recent");
   const [collections, setCollections] = useState<Collection[]>([])
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
 
@@ -485,6 +485,29 @@ async function handleDeleteCollection(collection: Collection) {
     { key: "warmth", label: "Temperature", min: -100, max: 100, step: 1, unit: "" }
   ];
 
+  const filteredProjects = projects
+    .filter(project =>
+      project.fileName
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortOrder) {
+        case "oldest":
+          return a.updatedAt.localeCompare(b.updatedAt);
+
+        case "name-asc":
+          return a.fileName.localeCompare(b.fileName);
+
+        case "name-desc":
+          return b.fileName.localeCompare(a.fileName);
+
+        case "recent":
+        default:
+          return b.updatedAt.localeCompare(a.updatedAt);
+      }
+    });
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -649,30 +672,14 @@ async function handleDeleteCollection(collection: Collection) {
 
             {projects.length === 0 ? (
               <p>No projects saved yet</p>
+            ) : filteredProjects.length === 0 ? (
+              <p>
+                {searchQuery.trim()
+                  ? "No projects match your search."
+                  : "No projects available."}
+              </p>
             ) : (
-              projects
-                .filter(project =>
-                  project.fileName
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-                )
-                .sort((a, b) => {
-                  switch (sortOrder) {
-                    case "oldest":
-                      return a.updatedAt.localeCompare(b.updatedAt);
-
-                    case "name-asc":
-                      return a.fileName.localeCompare(b.fileName);
-
-                    case "name-desc":
-                      return b.fileName.localeCompare(a.fileName);
-
-                    case "recent":
-                    default:
-                      return b.updatedAt.localeCompare(a.updatedAt);
-                  }
-                })
-                .map(project => (
+              filteredProjects.map(project => (
                 <div className="libraryItem" key={project.id}>
                   <ProjectThumbnail project={project}/>
 
@@ -750,18 +757,18 @@ async function handleDeleteCollection(collection: Collection) {
           </div>
 
           <button className="textButton" onClick={() => {
-  setHistory(current => {
-    if (!current) return current;
+              setHistory(current => {
+                if (!current) return current;
 
-    const newDocument: EditDocument = {
-      ...current.present,
-      adjustments: { ...defaultAdjustments },
-      updatedAt: new Date().toISOString(),
-    };
+                const newDocument: EditDocument = {
+                  ...current.present,
+                  adjustments: { ...defaultAdjustments },
+                  updatedAt: new Date().toISOString(),
+                };
 
-    return pushHistory(current, newDocument);
-  });
-}}>
+                return pushHistory(current, newDocument);
+              });
+            }}>
               Reset all
           </button>
           </div>
